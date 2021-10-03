@@ -1,0 +1,4 @@
+load-module myrisc-comp
+$controller=(create-RISC-controller name="controller")
+instantiate-components
+controller.status

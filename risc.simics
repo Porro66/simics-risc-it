@@ -1,0 +1,16 @@
+load-module sample-risc
+@import simics_common
+@MEMORY_SIZE = 0x10000000
+@cpu = simics_common.pre_conf_object("cpu","sample-risc")
+@cpu.freq_mhz = 40
+@cpu_core = simics_common.pre_conf_object("cpu_core","sample-risc-core")
+@cpu.current_risc_core = cpu_core
+@phys_mem = simics_common.pre_conf_object("phys_mem","memory-space")
+@cpu_core.physical_memory_space = phys_mem
+@mem = simics_common.pre_conf_object("ram", "ram")
+@mem_image = simics_common.pre_conf_object("mem_image", "image")
+@mem_image.size = MEMORY_SIZE
+@mem.image = mem_image
+@phys_mem.map = [[0x00000000, mem, 0, 0, MEMORY_SIZE]]
+@cpu_core.sample_risc = cpu
+@simics.SIM_add_configuration([cpu,cpu_core,phys_mem,mem,mem_image], None)
