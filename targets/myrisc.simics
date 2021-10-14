@@ -1,4 +1,5 @@
 load-module myrisc-comp
-$controller=(create-RISC-controller name="controller")
+$controller=(create-RISC-controller name="controller" firmware="%simics%/targets/risc.bin")
 instantiate-components
+output-radix 16
 controller.status

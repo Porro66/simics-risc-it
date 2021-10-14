@@ -2,10 +2,14 @@
 # Simics module makefile
 #
 
-MODULE_COMPONENTS := sample_pci_card
+MODULE_CLASSES = mem_mng
 
-SIMICS_API := latest
-THREAD_SAFE:=yes
-PYTHON_FILES = sample_components.py module_load.py
+SRC_FILES = mem-mng.dml
+
+PYTHON_FILES = module_load.py
+
+SIMICS_API := 6
+THREAD_SAFE:= yes
 
 include $(MODULE_MAKEFILE)
+

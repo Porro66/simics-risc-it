@@ -1,0 +1,85 @@
+dml 1.4;
+
+device mem_mng;
+
+import "simics/devs/translator.dml";
+import "simics/devs/memory-space.dml";
+
+param TOTAL_PROTECTED_AREAS = 2;
+param IO_WINDOW_START = 0x00000;
+param IO_WINDOW_END   = 0x10000;
+
+template simple_map_target {
+    is connect;
+    session const map_target_t *map_target;
+
+    method set(conf_object_t *obj) {
+        default(obj);
+        map_target = SIM_new_map_target(this.obj, NULL, NULL);
+    }
+}
+
+connect mem_tgt {
+    param documentation = "Memory for default access";
+    param type = "o";
+    param required = true;
+    interface memory_space;
+    is simple_map_target;
+}
+
+connect unmapped_ff {
+    param documentation = "Dummy memory";
+    param type = "o";
+    param required = true;
+    is simple_map_target;
+}
+
+bank mmng {
+    param register_size = 4;
+    group range[i < TOTAL_PROTECTED_AREAS] {
+        register ctrl @ 0x0 + 3 * 4 * i {
+            field En @ [0:0];
+            field Rsvd @ [31:1];
+        }
+        register ladr @ 0x4 + 3 * 4 * i;
+        register hadr @ 0x8 + 3 * 4 * i;
+    }
+}
+
+port mem_decoder {
+    implement translator {
+    	method translate(physical_address_t SA, access_t access,
+                         const map_target_t *default_target) -> (translation_t) {
+            local translation_t trans;
+            local bool access_denied = false;
+            local int i;
+
+            if ((access & Sim_Access_Write) != 0) {
+                for (i = 0; i < TOTAL_PROTECTED_AREAS; i++) {
+                    if (mmng.range[i].ctrl.En.val == 1
+                        && SA >= mmng.range[i].ladr.val
+                        && SA <= mmng.range[i].hadr.val) {
+                        access_denied = true;
+                        log info, 4:
+                            "Address 0x%lx hits range %d - 0x%lx:0x%lx",
+                            SA, i, mmng.range[i].ladr.val,
+                            mmng.range[i].hadr.val;
+                        break;
+                    }
+                }
+            }
+            if (access_denied) {
+                log info, 4: "Address 0x%lx access denied", SA;
+                trans.base = SA;
+                trans.start = 0x0;
+                trans.size = 1;
+                trans.target = unmapped_ff.map_target;
+            } else {
+                trans.base = 0x0;
+                trans.start = 0x0;
+                trans.target = mem_tgt.map_target;
+            }
+            return trans;
+        }
+	}
+}

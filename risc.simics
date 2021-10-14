@@ -14,3 +14,12 @@ load-module sample-risc
 @phys_mem.map = [[0x00000000, mem, 0, 0, MEMORY_SIZE]]
 @cpu_core.sample_risc = cpu
 @simics.SIM_add_configuration([cpu,cpu_core,phys_mem,mem,mem_image], None)
+
+simics> controller.phys_mem.map
+┌───────┬──────────────┬──┬──────┬────────┬──────┬────┬─────┬────┐
+│   Base│Object        │Fn│Offset│  Length│Target│Prio│Align│Swap│
+├───────┼──────────────┼──┼──────┼────────┼──────┼────┼─────┼────┤
+│0x10000│controller.rom│  │   0x0│ 0x40000│      │   0│     │    │
+│0x50000│controller.ram│  │   0x0│0x400000│      │   0│     │    │
+└───────┴──────────────┴──┴──────┴────────┴──────┴────┴─────┴────┘
+
