@@ -6,8 +6,6 @@ import "simics/devs/translator.dml";
 import "simics/devs/memory-space.dml";
 
 param TOTAL_PROTECTED_AREAS = 2;
-param IO_WINDOW_START = 0x00000;
-param IO_WINDOW_END   = 0x10000;
 
 template simple_map_target {
     is connect;

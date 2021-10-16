@@ -3,9 +3,11 @@ import simics_common
 from comp import *
 
 DEF_RAM_SIZE = 0x400000
-DEF_IOR_SIZE = 0x10000
+DEF_MMIO_SIZE = 0x10000
 DEF_ROM_SIZE = 0x40000
-TOTAL_PROTECTED_AREAS = 2
+MPROT_PORTS_ADDR = 0x0
+MPROT_PORTS_SIZE = 0xC
+
 
 class RISC_controller(StandardConnectorComponent):
     """Base class for RISC controller."""
@@ -38,7 +40,7 @@ class RISC_controller(StandardConnectorComponent):
             if self.val:
                 lookup = simics.SIM_lookup_file(self.val)
                 if not lookup:
-                    print('lookup of firmware files %s failed' % self.val)
+                    print('firmware file %s is not found' % self.val)
                     return ''
                 return lookup
             return self.val
@@ -57,7 +59,7 @@ class RISC_controller(StandardConnectorComponent):
         return True
 
     def post_instantiate_controller(self):
-        self.init_firmware();
+        self.load_firmware();
 
     def get_clock(self):
         sub_cmps = [x for x in self.obj.iface.component.get_slot_objects() if (
@@ -93,23 +95,22 @@ class RISC_controller(StandardConnectorComponent):
         mem_mng.mem_tgt = mem_space
         mem_mng.unmapped_ff = unmapped_ff
         ram_space.default_target = [[mem_mng, 'mem_decoder'], 0, 0, mem_space]
-        phys_mem.map += [[0x0, [mem_mng, "mmng"], 0, 0, TOTAL_PROTECTED_AREAS * 3 * 4, None, 0, 4],
-                         [DEF_IOR_SIZE+DEF_ROM_SIZE, ram_space, 0, 0, self.mem_size.val]
+        phys_mem.map += [[MPROT_PORTS_ADDR, [mem_mng, "mmng"], 0, 0, MPROT_PORTS_SIZE, None, 0, 4],
+                         [DEF_MMIO_SIZE+DEF_ROM_SIZE, ram_space, 0, 0, self.mem_size.val]
                         ]
 
         # Firmware
-        if self.firmware.lookup():
-            rom = self.add_pre_obj('rom', 'rom')
-            rom_image = self.add_pre_obj('rom_image', 'image')
-            rom_image.size = DEF_ROM_SIZE
-            rom.image = rom_image
-            phys_mem.map += [[DEF_IOR_SIZE, rom, 0, 0, DEF_ROM_SIZE]]
+        rom = self.add_pre_obj('rom', 'rom')
+        rom_image = self.add_pre_obj('rom_image', 'image')
+        rom_image.size = DEF_ROM_SIZE
+        rom.image = rom_image
+        phys_mem.map += [[DEF_MMIO_SIZE, rom, 0, 0, DEF_ROM_SIZE]]
 
-    def init_firmware(self):
+    def load_firmware(self):
         if self.firmware.lookup():
             # Load the firmware into the ROM area
             simics.SIM_load_file(self.get_slot('phys_mem'), self.firmware.val,
-                                 DEF_IOR_SIZE, True)
+                                 DEF_MMIO_SIZE, True)
 
     def get_processors(self):
         ret = [self.get_slot('cpu')]
