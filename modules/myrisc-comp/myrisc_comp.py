@@ -74,7 +74,10 @@ class RISC_controller(StandardConnectorComponent):
             return clocks[0]
 
     def add_objects(self):
+        clk = self.add_pre_obj ('clk' , 'clock')
+        clk.freq_mhz = self.freq_mhz.val
         cpu_core = self.add_pre_obj('cpu_core', 'sample-risc-core')
+        cpu_core.queue = clk
         cpu = self.add_pre_obj('cpu', 'sample-risc')
         cpu.freq_mhz = self.freq_mhz.val
         cpu.current_risc_core = cpu_core
